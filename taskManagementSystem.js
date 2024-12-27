@@ -1,30 +1,6 @@
-const table = [
-  {
-    id: 1,
-    userName: "charan",
-    tasks: [
-      {
-        id: 1,
-        title: "practice js",
-        description: "closures, object methods",
-        creationDate: "25/12/2024",
-        dueDate: "25/12/2024",
-        status: "pending",
-        priority: "high",
-      },
-    ],
-  },
-];
-
 const getDate = () => {
   const currentDate = new Date();
-  const date = [
-    currentDate.getDate(),
-    currentDate.getMonth() + 1,
-    currentDate.getFullYear(),
-  ];
-
-  return date.join("/");
+  return currentDate.toLocaleDateString();
 };
 
 const userNotFoundException = (userName) => {
@@ -42,7 +18,7 @@ const fetchUser = (userName) =>
   table.find((person) => person.userName === userName);
 
 //create task
-const createTask = function (userName, task) {
+const createTask = function (userName, task, table) {
   const user = fetchUser(userName);
 
   if (!user) return userNotFoundException(userName);
@@ -68,49 +44,34 @@ const displayDataOf = function (userName, data) {
   console.table(data);
 };
 
-const fetchTasksOf = function () {
-  const userName = getUserName();
-  const user = fetchUser(userName);
-  if (!user) return userNotFoundException(userName);
-
-  return displayDataOf(userName, user.tasks);
+const fetchTasks = function (userName) {
+  return displayDataOf(userName, userName.tasks);
 };
 
 //update task by user name
 //creation date and id shouldn't changed
 const updateTasksOf = function (userName, taskID, field, content) {
-  const user = fetchUser(userName);
-  if (!user) return userNotFoundException(userName);
-
-  user.tasks[taskID - 1][field] = content;
-  return displayDataOf(userName, user.tasks);
+  userName.tasks[taskID - 1][field] = content;
+  return displayDataOf(userName, userName.tasks);
 };
 
 //delete tasks
 const deleteTasksOf = function (userName, taskID) {
-  const user = fetchUser(userName);
-  if (!user) return userNotFoundException(userName);
-
   user.tasks.splice(taskID - 1, 1);
-  return displayDataOf(userName, user.tasks);
+  return displayDataOf(userName, userName.tasks);
 };
 
 //sort by priority
 //need to sort by multiple fields
-const getLookUp = function (field) {
+const getPriorityValuesOf = function (priority) {
   const lookUp = { high: 1, medium: 2, low: 3 };
-  return lookUp[field.toLowerCase()];
+  return lookUp[priority.toLowerCase()];
 };
 
-const sortBy = function (fieldToSort) {
-  const userName = getUserName();
-  const user = fetchUser(userName);
-
-  if (!user) return userNotFoundException(userName);
-
+const sortBy = function (userName) {
   const sorted = user.tasks.sort((taskA, taskB) => {
-    const taskAPriority = getLookUp(taskA.priority);
-    const taskBPriority = getLookUp(taskB.priority);
+    const taskAPriority = getPriorityValuesOf(taskA.priority);
+    const taskBPriority = getPriorityValuesOf(taskB.priority);
 
     return taskAPriority - taskBPriority;
   });
@@ -130,77 +91,74 @@ const getUserDetails = () => {
   return userName;
 };
 
-const promptTocreateTask = () => {
-  const userName = getUserDetails();
+const promptTocreateTasksOf = (userName, table) => {
   const title = prompt("enter task title");
   const description = prompt("enter task description");
   const dueDate = prompt("enter due date");
   const priority = prompt("enter priority");
 
-  return createTask(userName, { title, description, dueDate, priority });
+  return createTask(userName, { title, description, dueDate, priority }, table);
 };
 
-const promptToUpdateTasksOf = () => {
-  const userName = getUserDetails();
+const promptToUpdateTasksOf = (userName, table) => {
   const taskID = +prompt("enter task ID");
   const taskField = prompt("enter task field");
   const updatedValue = prompt("enter content to update");
 
-  return updateTasksOf(userName, taskID, taskField, updatedValue);
+  return updateTasksOf(userName, taskID, taskField, updatedValue, table);
 };
 
-const promptToDeleteTasksOf = () => {
-  const userName = getUserDetails();
+const promptToDeleteTasksOf = (userName, table) => {
   const taskID = prompt("enter task ID");
-  return deleteTasksOf(userName, taskID);
+  return deleteTasksOf(userName, taskID, table);
 };
 
-const executeCommand = (command, operations) => {
+const executeCommand = (command, operations, userName, table) => {
   if (!operations[command]) {
     console.log("command not found:", command);
     return;
   }
-  return operations[command]();
+
+  return operations[command](userName, table);
 };
 
 const main = () => {
+  const table = [
+    {
+      id: 1,
+      userName: "charan",
+      tasks: [
+        {
+          id: 1,
+          title: "practice js",
+          description: "closures, object methods",
+          creationDate: "25/12/2024",
+          dueDate: "25/12/2024",
+          status: "pending",
+          priority: "high",
+        },
+      ],
+    },
+  ];
+
   while (true) {
     const command = prompt(
-      "select an operation:  registration createTODO fetch update delete sortBy\n"
+      "\nselect an operation:  registration\tcreateTODO\tfetch\tupdate\tdelete\t sortBy\t\t\tlogin\t\tsignup\n"
     );
 
     const operations = {
       registration: registerUser,
-      fetch: fetchTasksOf,
-      sortBy: sortBy,
+      fetch: fetchTasks,
+      sortBy,
 
-      createTODO: promptTocreateTask,
+      createTODO: promptTocreateTasksOf,
       update: promptToUpdateTasksOf,
       delete: promptToDeleteTasksOf,
     };
 
-    executeCommand(command, operations);
+    const userName = getUserDetails();
+    executeCommand(command, operations, userName, table);
   }
 };
 
 main();
-// registerUser("Bobby");
-
-// createTask("charan", {
-//   title: "demo",
-//   description: "demo",
-//   dueDate: 0,
-//   priority: "medium",
-// });
-
-// createTask("charan", {
-//   title: "demo2",
-//   description: "demo",
-//   dueDate: 0,
-//   priority: "high",
-// });
-
-// fetchTasksOf("charan");
-// updateTasksOf("charan", 1, "title", "modified value");
-// // deleteTasksOf("charan", 2);
-// sortBy("charan");
